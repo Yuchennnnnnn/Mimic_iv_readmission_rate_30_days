@@ -1,0 +1,149 @@
+# Configuration for 30-day readmission prediction pipeline
+
+# Data paths
+data:
+  input_path: "../../cleaned_data.csv"
+  feature_importance_path: "../Feature_Importance_by_Coef.csv"  # Pre-computed feature importance
+  output_dir: "artifacts"
+  reports_dir: "reports"
+  
+# Column definitions
+columns:
+  # Identifier columns (not used as features)
+  id_cols: ["subject_id", "hadm_id"]
+  
+  # Time columns
+  time_cols: ["admittime", "dischtime"]
+  
+  # Target variable
+  label: "readmit_label"
+  
+  # Categorical columns
+  categorical_cols:
+    - "last_service"
+    - "gender"
+    - "language"
+    - "marital_status"
+    - "insurance"
+    - "admission_type"
+    - "admission_location"
+    - "discharge_location"
+  
+  # Numeric columns (subset - full list will be auto-detected)
+  numeric_cols:
+    - "anchor_age"
+    - "length_of_stay"
+    - "days_since_prev_discharge"
+    - "num_transfers"
+    - "unique_careunits"
+    - "ed_los_hours"
+    - "num_diagnoses"
+  
+  # Sequence columns (for LSTM/Transformer - optional)
+  sequence_cols: []
+  
+# Preprocessing
+preprocessing:
+  # Threshold for one-hot encoding vs ordinal encoding
+  ohe_cardinality_threshold: 10
+  
+  # Threshold for dropping high-cardinality categories
+  rare_category_threshold: 10
+  
+  # Handle missing values
+  fill_numeric_na: "median"
+  fill_categorical_na: "mode"
+
+# Feature selection using pre-computed importance
+feature_selection:
+  enabled: true  # Set to false to use all features
+  method: "importance_file"  # Use pre-computed importance
+  top_n: 50  # Keep top N features (null to keep all)
+  importance_threshold: 0.05  # Minimum importance threshold (null to ignore)
+
+# Train/test split
+split:
+  test_size: 0.2
+  random_state: 42
+  stratify: true
+
+# Models to train
+models_to_run:
+  - "logistic"
+  - "rf"
+  - "xgb"
+  - "lstm"
+  - "transformer"
+
+# Model hyperparameters
+hyperparameters:
+  logistic:
+    penalty: "l2"
+    C: 1.0
+    max_iter: 1000
+    class_weight: "balanced"
+    random_state: 42
+    solver: "saga"
+  
+  rf:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    min_samples_leaf: 2
+    class_weight: "balanced"
+    random_state: 42
+    n_jobs: -1
+  
+  xgb:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    scale_pos_weight: 3.0  # For imbalanced classes
+    random_state: 42
+    tree_method: "hist"
+    enable_categorical: false  # Set true if using native categorical support
+  
+  lstm:
+    hidden_dim: 128
+    num_layers: 2
+    bidirectional: true
+    dropout: 0.3
+    batch_size: 64
+    num_epochs: 50
+    learning_rate: 0.001
+    early_stopping_patience: 5
+    weight_decay: 0.0001
+  
+  transformer:
+    d_model: 128
+    nhead: 8
+    num_layers: 3
+    dim_feedforward: 512
+    dropout: 0.3
+    batch_size: 64
+    num_epochs: 50
+    learning_rate: 0.0001
+    early_stopping_patience: 5
+    weight_decay: 0.0001
+
+# Embedding dimensions heuristic for deep models
+embeddings:
+  # emb_dim = min(max_emb_dim, int(multiplier * (vocab_size ** exponent)))
+  max_emb_dim: 50
+  multiplier: 1.6
+  exponent: 0.56
+
+# Cross-validation settings (for sklearn models)
+cross_validation:
+  enabled: false
+  cv_folds: 5
+  n_jobs: -1
+
+# Random seeds for reproducibility
+seed: 42
+deterministic: true
+
+# Compute device
+device: "cuda"  # or "cpu"
