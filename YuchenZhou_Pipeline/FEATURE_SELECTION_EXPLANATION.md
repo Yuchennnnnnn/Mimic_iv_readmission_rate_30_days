@@ -1,56 +1,56 @@
-# 特征选择说明 - 为什么50个LASSO特征变成了18个原始列？
+# Feature Selection Explanation - Why Did 50 LASSO Features Become 18 Original Columns?
 
-## 📊 快速回答
+## 📊 Quick Answer
 
-**这是正常的！** LASSO在One-Hot编码后的数据上训练，而我们使用的是编码前的原始数据。
+**This is normal!** LASSO was trained on One-Hot encoded data, while we use the original pre-encoding data.
 
-- ✅ **LASSO选择**: 48个特征（One-Hot编码后）
-- ✅ **映射结果**: 18个原始数据列
-- ✅ **原因**: 多个编码特征对应同一个原始列
+- ✅ **LASSO Selection**: 48 features (after One-Hot encoding)
+- ✅ **Mapping Result**: 18 original data columns
+- ✅ **Reason**: Multiple encoded features correspond to the same original column
 
 ---
 
-## 🔍 详细解释
+## 🔍 Detailed Explanation
 
-### 1. LASSO特征选择过程
+### 1. LASSO Feature Selection Process
 
-Xi Chen的LASSO模型：
+Xi Chen's LASSO model:
 ```
-原始数据 → One-Hot编码 → LASSO训练 → 选择重要特征
-```
-
-例如 `gender` 列：
-```
-原始: gender = ['M', 'F']
-↓ One-Hot编码
-编码后: gender_M = [1, 0]
-       gender_F = [0, 1]
-↓ LASSO选择
-选择: gender_F (重要性 0.38), gender_M (重要性 0.22)
+Original data → One-Hot encoding → LASSO training → Select important features
 ```
 
-### 2. 我们的映射过程
-
-我们的pipeline：
+Example with `gender` column:
 ```
-LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
+Original: gender = ['M', 'F']
+↓ One-Hot encoding
+Encoded: gender_M = [1, 0]
+        gender_F = [0, 1]
+↓ LASSO selection
+Selected: gender_F (importance 0.38), gender_M (importance 0.22)
 ```
 
-映射规则：
+### 2. Our Mapping Process
+
+Our pipeline:
+```
+LASSO features (48) → Map to original columns → Original data (18 columns)
+```
+
+Mapping rules:
 ```python
-'gender_F' + 'gender_M' → 'gender' (1个原始列)
-'last_service_OMED' + 'last_service_ORTHO' + ... → 'last_service' (1个原始列)
+'gender_F' + 'gender_M' → 'gender' (1 original column)
+'last_service_OMED' + 'last_service_ORTHO' + ... → 'last_service' (1 original column)
 ```
 
 ---
 
-## 📋 完整映射表
+## 📋 Complete Mapping Table
 
-### 一对一映射（10个列）
-这些列没有被One-Hot编码，直接匹配：
+### One-to-One Mapping (10 columns)
+These columns were not One-Hot encoded, direct match:
 
-| 原始列 | LASSO特征 | 重要性 |
-|--------|-----------|--------|
+| Original Column | LASSO Feature | Importance |
+|-----------------|---------------|------------|
 | `died_in_hospital` | died_in_hospital | 0.6032 ⭐ |
 | `days_since_prev_discharge` | days_since_prev_discharge | 0.2812 |
 | `anchor_age` | anchor_age | 0.1705 |
@@ -62,10 +62,10 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 | `is_surgical_service` | is_surgical_service | 0.0588 |
 | `Potassium_min` | Potassium_min | 0.0578 |
 
-### 一对多映射（8个列）
-这些列被One-Hot编码，多个LASSO特征映射到1个原始列：
+### One-to-Many Mapping (8 columns)
+These columns were One-Hot encoded, multiple LASSO features map to 1 original column:
 
-#### 1. `last_service` ← 7个LASSO特征
+#### 1. `last_service` ← 7 LASSO features
 ```
 ✓ last_service_OMED        (0.4505) ⭐
 ✓ last_service_ORTHO       (0.2996)
@@ -76,7 +76,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ last_service_MED         (0.0637)
 ```
 
-#### 2. `discharge_location` ← 7个LASSO特征
+#### 2. `discharge_location` ← 7 LASSO features
 ```
 ✓ discharge_location_HOSPICE                  (0.3182)
 ✓ discharge_location_HOME                     (0.1577)
@@ -87,7 +87,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ discharge_location_AGAINST ADVICE           (0.0706)
 ```
 
-#### 3. `admission_type` ← 6个LASSO特征
+#### 3. `admission_type` ← 6 LASSO features
 ```
 ✓ admission_type_SURGICAL SAME DAY ADMISSION  (0.3403)
 ✓ admission_type_OBSERVATION ADMIT            (0.2018)
@@ -97,7 +97,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ admission_type_DIRECT EMER.                 (0.1046)
 ```
 
-#### 4. `marital_status` ← 4个LASSO特征
+#### 4. `marital_status` ← 4 LASSO features
 ```
 ✓ marital_status_MARRIED   (0.2084)
 ✓ marital_status_SINGLE    (0.1470)
@@ -105,7 +105,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ marital_status_DIVORCED  (0.0932)
 ```
 
-#### 5. `admission_location` ← 4个LASSO特征
+#### 5. `admission_location` ← 4 LASSO features
 ```
 ✓ admission_location_TRANSFER FROM HOSPITAL   (0.2098)
 ✓ admission_location_WALK-IN/SELF REFERRAL    (0.1243)
@@ -113,7 +113,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ admission_location_CLINIC REFERRAL          (0.0523)
 ```
 
-#### 6. `insurance` ← 4个LASSO特征
+#### 6. `insurance` ← 4 LASSO features
 ```
 ✓ insurance_Private   (0.2107)
 ✓ insurance_Medicare  (0.1700)
@@ -121,7 +121,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ insurance_Other     (0.0761)
 ```
 
-#### 7. `language` ← 4个LASSO特征
+#### 7. `language` ← 4 LASSO features
 ```
 ✓ language_English  (0.1936)
 ✓ language_Spanish  (0.1011)
@@ -129,7 +129,7 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 ✓ language_Chinese  (0.0602)
 ```
 
-#### 8. `gender` ← 2个LASSO特征
+#### 8. `gender` ← 2 LASSO features
 ```
 ✓ gender_F  (0.3823)
 ✓ gender_M  (0.2198)
@@ -137,95 +137,95 @@ LASSO特征(48个) → 映射到原始列 → 原始数据(18列)
 
 ---
 
-## 📈 数据降维效果
+## 📈 Data Dimensionality Reduction Effect
 
 ```
-原始数据: 47 列
+Original data: 47 columns
     ↓
-LASSO筛选 (One-Hot编码后): 121 → 48 个重要特征
+LASSO selection (after One-Hot encoding): 121 → 48 important features
     ↓
-映射回原始列: 18 列
+Map back to original columns: 18 columns
     ↓
-最终训练: 18 个特征列 + 3 个ID/Label列 = 21 列
+Final training: 18 feature columns + 3 ID/Label columns = 21 columns
 ```
 
-**降维效果**: 47 → 18 列（减少 61.7%）
+**Dimensionality reduction**: 47 → 18 columns (61.7% reduction)
 
 ---
 
-## 💡 为什么这样做？
+## 💡 Why Do It This Way?
 
-### 优势
-1. ✅ **利用LASSO结果**: 保留了Xi Chen发现的重要特征
-2. ✅ **避免数据泄露**: 使用原始categorical列，让模型自己学习编码
-3. ✅ **灵活性**: 不同模型可以用不同的编码方式
-   - Logistic Regression: One-Hot编码
-   - Random Forest: Label编码或直接使用
-   - XGBoost: 直接处理categorical
-4. ✅ **减少特征数**: 从47列减少到18列，训练更快
+### Advantages
+1. ✅ **Leverage LASSO results**: Retain important features discovered by Xi Chen
+2. ✅ **Avoid data leakage**: Use original categorical columns, let the model learn encoding itself
+3. ✅ **Flexibility**: Different models can use different encoding methods
+   - Logistic Regression: One-Hot encoding
+   - Random Forest: Label encoding or direct use
+   - XGBoost: Handle categorical directly
+4. ✅ **Reduce features**: From 47 columns to 18, faster training
 
-### 示例
-比如 `gender` 列：
-- **LASSO方式**: 选择 `gender_F` 和 `gender_M` 两个二值特征
-- **我们的方式**: 保留 `gender` 一个列，让模型决定如何编码
-  - LR会自动One-Hot编码成 gender_F, gender_M
-  - RF可以直接使用categorical
-  - XGBoost可以原生处理
+### Example
+For the `gender` column:
+- **LASSO approach**: Select `gender_F` and `gender_M` two binary features
+- **Our approach**: Keep `gender` as one column, let the model decide encoding
+  - LR will automatically One-Hot encode to gender_F, gender_M
+  - RF can directly use categorical
+  - XGBoost can natively handle it
 
 ---
 
-## 🔧 如何调整特征数量？
+## 🔧 How to Adjust Number of Features?
 
-如果你想使用更多特征，可以修改 `training/config.yaml`:
+If you want to use more features, modify `training/config.yaml`:
 
 ```yaml
 feature_selection:
   enabled: true
-  top_n: 100        # 增加到100 (当前: 50)
-  importance_threshold: 0.01  # 降低阈值 (当前: 0.05)
+  top_n: 100        # Increase to 100 (current: 50)
+  importance_threshold: 0.01  # Lower threshold (current: 0.05)
 ```
 
-预期效果：
-- `top_n: 100` → 约 30-35 个原始列
-- `top_n: 121` (全部) → 约 40+ 个原始列
+Expected effects:
+- `top_n: 100` → approximately 30-35 original columns
+- `top_n: 121` (all) → approximately 40+ original columns
 
 ---
 
-## 📊 当前模型性能
+## 📊 Current Model Performance
 
-使用18个特征的结果：
+Results using 18 features:
 
-| 模型 | ROC-AUC | Recall | F1-Score |
+| Model | ROC-AUC | Recall | F1-Score |
 |------|---------|--------|----------|
 | **XGBoost** | **0.7029** ⭐ | 68.46% | 0.4938 |
 | Random Forest | 0.6933 | 62.84% | 0.4824 |
 | Logistic Regression | 0.6626 | 66.21% | 0.4643 |
 
-✅ **结论**: 18个精选特征已经取得了很好的效果！
+✅ **Conclusion**: 18 carefully selected features already achieve excellent results!
 
 ---
 
-## 🎯 总结
+## 🎯 Summary
 
-**50个LASSO特征 → 18个原始列是完全正常的**
+**50 LASSO features → 18 original columns is completely normal**
 
-原因：
-1. LASSO在One-Hot编码数据上训练（121维）
-2. 选择了48个重要的编码特征
-3. 这些特征映射回原始数据时合并为18个base columns
-4. 我们的模型在这18列上训练，效果很好
+Reasons:
+1. LASSO was trained on One-Hot encoded data (121 dimensions)
+2. Selected 48 important encoded features
+3. These features merge to 18 base columns when mapped back to original data
+4. Our models train on these 18 columns with great results
 
-这种设计：
-- ✅ 充分利用了LASSO的特征选择结果
-- ✅ 保持了数据的原始格式
-- ✅ 让不同模型使用最适合的编码方式
-- ✅ 训练速度快，性能好
+This design:
+- ✅ Fully utilizes LASSO's feature selection results
+- ✅ Maintains original data format
+- ✅ Allows different models to use the most suitable encoding method
+- ✅ Fast training with good performance
 
 ---
 
-## 📖 相关文件
+## 📖 Related Files
 
-- 映射检查脚本: `training/check_feature_mapping.py`
-- 特征选择代码: `training/src/feature_selection.py`
-- LASSO结果: `Feature_Importance_by_Coef.csv`
-- 配置文件: `training/config.yaml`
+- Mapping check script: `training/check_feature_mapping.py`
+- Feature selection code: `training/src/feature_selection.py`
+- LASSO results: `Feature_Importance_by_Coef.csv`
+- Configuration file: `training/config.yaml`

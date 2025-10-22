@@ -1,17 +1,17 @@
-# 模型训练结果报告
+# Model Training Results Report
 
-**训练时间**: 2025-10-21 00:24:46  
-**数据集**: MIMIC-IV cleaned_data.csv  
-**特征数**: 18个 (从LASSO的48个One-Hot特征映射而来)  
-**训练样本**: 164,784  
-**测试样本**: 41,196  
-**再入院率**: 26.72%  
+**Training Time**: 2025-10-21 00:24:46  
+**Dataset**: MIMIC-IV cleaned_data.csv  
+**Number of Features**: 18 features (mapped from LASSO's 48 One-Hot features)  
+**Training Samples**: 164,784  
+**Test Samples**: 41,196  
+**Readmission Rate**: 26.72%  
 
 ---
 
-## 📊 模型性能对比
+## 📊 Model Performance Comparison
 
-| 模型 | ROC-AUC | PR-AUC | Accuracy | Precision | Recall | F1-Score |
+| Model | ROC-AUC | PR-AUC | Accuracy | Precision | Recall | F1-Score |
 |------|---------|--------|----------|-----------|--------|----------|
 | **LR** | 0.6626 | 0.4037 | 0.5918 | 0.3576 | 0.6621 | 0.4643 |
 | **RF** | 0.6933 | 0.4610 | 0.6397 | 0.3915 | 0.6284 | 0.4824 |
@@ -19,56 +19,56 @@
 
 ---
 
-## 🏆 最佳模型
+## 🏆 Best Models
 
-- **最佳ROC-AUC**: XGB (0.7029)
-- **最佳F1-Score**: XGB (0.4938)
-- **最佳Recall**: XGB (0.6846)
-
----
-
-## 💡 关键发现
-
-1. **XGBoost表现最佳**: ROC-AUC达到0.7029，在所有指标上都优于其他模型
-2. **Recall vs Precision权衡**: 
-   - XGBoost: 最高recall (68.46%)，适合捕获更多再入院患者
-   - Random Forest: 更平衡的precision (39.15%)
-3. **特征选择效果显著**: 使用仅18个特征就达到了0.70+的AUC
+- **Best ROC-AUC**: XGB (0.7029)
+- **Best F1-Score**: XGB (0.4938)
+- **Best Recall**: XGB (0.6846)
 
 ---
 
-## 📈 详细指标
+## 💡 Key Findings
+
+1. **XGBoost Performs Best**: ROC-AUC reaches 0.7029, outperforming other models across all metrics
+2. **Recall vs Precision Trade-off**: 
+   - XGBoost: Highest recall (68.46%), suitable for capturing more readmission patients
+   - Random Forest: More balanced precision (39.15%)
+3. **Effective Feature Selection**: Achieved 0.70+ AUC with only 18 features
+
+---
+
+## 📈 Detailed Metrics
 
 ### Logistic Regression
 - ROC-AUC: 0.6626
-- 优势: 训练快速，可解释性强
-- 适用场景: 需要快速部署和解释的场景
+- Advantages: Fast training, strong interpretability
+- Use Cases: Scenarios requiring quick deployment and interpretation
 
 ### Random Forest  
 - ROC-AUC: 0.6933
-- 优势: 自动处理非线性关系，特征重要性可视化
-- 适用场景: 需要特征重要性分析
+- Advantages: Automatically handles non-linear relationships, feature importance visualization
+- Use Cases: When feature importance analysis is needed
 
 ### XGBoost ⭐
 - ROC-AUC: 0.7029
-- 优势: 最佳性能，处理复杂模式
-- 适用场景: 生产环境首选
+- Advantages: Best performance, handles complex patterns
+- Use Cases: First choice for production environments
 
 ---
 
-## 📁 文件位置
+## 📁 File Locations
 
-- 模型: `artifacts/*.pkl`
-- 预测结果: `reports/predictions_*.csv`
-- 可视化: `reports/*.png`
-- 详细指标: `reports/metrics.csv`
+- Models: `artifacts/*.pkl`
+- Prediction Results: `reports/predictions_*.csv`
+- Visualizations: `reports/*.png`
+- Detailed Metrics: `reports/metrics.csv`
 
 ---
 
-## 🔧 下一步建议
+## 🔧 Next Steps Recommendations
 
-1. **超参数调优**: 使用GridSearch优化XGBoost
-2. **特征工程**: 尝试增加更多LASSO特征 (top_n: 100)
-3. **集成学习**: 组合多个模型的预测
-4. **深度学习**: 训练LSTM和Transformer模型
-5. **模型解释**: 使用SHAP分析特征重要性
+1. **Hyperparameter Tuning**: Optimize XGBoost using GridSearch
+2. **Feature Engineering**: Try adding more LASSO features (top_n: 100)
+3. **Ensemble Learning**: Combine predictions from multiple models
+4. **Deep Learning**: Train LSTM and Transformer models
+5. **Model Interpretation**: Use SHAP to analyze feature importance

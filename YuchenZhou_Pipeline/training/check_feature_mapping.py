@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-检查LASSO特征到原始数据列的映射
+Check LASSO feature to original data column mapping
 """
 
 import pandas as pd
@@ -9,26 +9,26 @@ sys.path.insert(0, 'src')
 
 from feature_selection import load_feature_importance, select_top_features, map_feature_to_column
 
-# 加载数据
-print("加载数据...")
+# Load data
+print("Loading data...")
 data = pd.read_csv('../../cleaned_data.csv')
-print(f"数据形状: {data.shape}")
-print(f"原始列数: {len(data.columns)}\n")
+print(f"Data shape: {data.shape}")
+print(f"Original columns: {len(data.columns)}\n")
 
-# 加载特征重要性
+# Load feature importance
 print("="*80)
-print("加载LASSO特征重要性")
+print("Loading LASSO Feature Importance")
 print("="*80)
 feat_imp_df = load_feature_importance('../Feature_Importance_by_Coef.csv')
-print(f"LASSO特征总数: {len(feat_imp_df)}\n")
+print(f"Total LASSO features: {len(feat_imp_df)}\n")
 
-# 选择top 50
+# Select top 50
 selected_features = select_top_features(feat_imp_df, top_n=50, importance_threshold=0.05)
-print(f"选择的LASSO特征数: {len(selected_features)}\n")
+print(f"Selected LASSO features: {len(selected_features)}\n")
 
-# 映射到原始列
+# Map to original columns
 print("="*80)
-print("特征映射详情")
+print("Feature Mapping Details")
 print("="*80)
 
 mapping = {}
@@ -39,43 +39,43 @@ for feat in selected_features:
             mapping[col] = []
         mapping[col].append(feat)
 
-print(f"\nLASSO特征 → 原始列映射:")
-print(f"  {len(selected_features)} 个LASSO特征 → {len(mapping)} 个原始列\n")
+print(f"\nLASSO Features → Original Columns Mapping:")
+print(f"  {len(selected_features)} LASSO features → {len(mapping)} original columns\n")
 
-print("详细映射:")
+print("Detailed mapping:")
 print("-"*80)
 for i, (col, feats) in enumerate(sorted(mapping.items()), 1):
-    print(f"\n{i}. 原始列: {col}")
-    print(f"   对应的LASSO特征 ({len(feats)}个):")
+    print(f"\n{i}. Original column: {col}")
+    print(f"   Corresponding LASSO features ({len(feats)}):")
     for feat in feats:
         imp = feat_imp_df[feat_imp_df['feature'] == feat]['importance'].values[0]
-        print(f"     - {feat:50s} (重要性: {imp:.4f})")
+        print(f"     - {feat:50s} (importance: {imp:.4f})")
 
-# 统计
+# Statistics
 print("\n" + "="*80)
-print("统计汇总")
+print("Statistical Summary")
 print("="*80)
 
 one_to_many = {col: feats for col, feats in mapping.items() if len(feats) > 1}
 one_to_one = {col: feats for col, feats in mapping.items() if len(feats) == 1}
 
-print(f"\n一对一映射 (原始列 = LASSO特征): {len(one_to_one)} 个")
+print(f"\nOne-to-one mapping (original column = LASSO feature): {len(one_to_one)}")
 for col in sorted(one_to_one.keys()):
     print(f"  - {col}")
 
-print(f"\n一对多映射 (原始列包含多个LASSO特征): {len(one_to_many)} 个")
+print(f"\nOne-to-many mapping (original column contains multiple LASSO features): {len(one_to_many)}")
 for col, feats in sorted(one_to_many.items()):
-    print(f"  - {col}: {len(feats)} 个LASSO特征")
+    print(f"  - {col}: {len(feats)} LASSO features")
     
 print("\n" + "="*80)
-print("结论")
+print("Conclusion")
 print("="*80)
 print(f"""
-✓ LASSO选择了 {len(selected_features)} 个特征（One-Hot编码后的）
-✓ 这些特征映射到 {len(mapping)} 个原始数据列
-✓ 其中 {len(one_to_one)} 列是直接匹配
-✓ 其中 {len(one_to_many)} 列包含多个One-Hot编码值
+✓ LASSO selected {len(selected_features)} features (after One-Hot encoding)
+✓ These features map to {len(mapping)} original data columns
+✓ {len(one_to_one)} columns are direct matches
+✓ {len(one_to_many)} columns contain multiple One-Hot encoded values
 
-这是正常的！因为LASSO是在One-Hot编码后的数据上训练的，
-而我们的原始数据是编码前的categorical columns。
+This is normal! LASSO was trained on One-Hot encoded data,
+while our original data contains categorical columns before encoding.
 """)
