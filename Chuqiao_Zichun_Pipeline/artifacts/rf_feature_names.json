@@ -1,0 +1,13 @@
+[
+  "last_service",
+  "gender",
+  "language",
+  "marital_status",
+  "insurance",
+  "admission_type",
+  "admission_location",
+  "discharge_location",
+  "died_in_hospital",
+  "days_since_prev_discharge",
+  "anchor_age"
+]

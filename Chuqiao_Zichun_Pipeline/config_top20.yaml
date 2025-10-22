@@ -1,0 +1,116 @@
+# Config overrides for top-20 feature experiment using Yuchen Zhou's pipeline
+
+data:
+  input_path: "/Users/luchuqiao/Desktop/Compsci526/Mimic-project/datasets/cleaned_data.csv"
+  feature_importance_path: "../YuchenZhou_Pipeline/Feature_Importance_by_Coef.csv"
+  output_dir: "/Users/luchuqiao/Desktop/Compsci526/Mimic-project/Chuqiao_Zichun_Pipeline/artifacts"
+  reports_dir: "/Users/luchuqiao/Desktop/Compsci526/Mimic-project/Chuqiao_Zichun_Pipeline/reports"
+
+columns:
+  id_cols: ["subject_id", "hadm_id"]
+  time_cols: ["admittime", "dischtime"]
+  label: "readmit_label"
+  categorical_cols:
+    - "last_service"
+    - "gender"
+    - "language"
+    - "marital_status"
+    - "insurance"
+    - "admission_type"
+    - "admission_location"
+    - "discharge_location"
+  numeric_cols:
+    - "anchor_age"
+    - "length_of_stay"
+    - "days_since_prev_discharge"
+    - "num_transfers"
+    - "unique_careunits"
+    - "ed_los_hours"
+    - "num_diagnoses"
+  sequence_cols: []
+
+preprocessing:
+  ohe_cardinality_threshold: 10
+  rare_category_threshold: 10
+  fill_numeric_na: "median"
+  fill_categorical_na: "mode"
+
+feature_selection:
+  enabled: true
+  method: "importance_file"
+  top_n: 20
+  importance_threshold: null
+
+split:
+  test_size: 0.2
+  random_state: 42
+  stratify: true
+
+models_to_run:
+  - "logistic"
+  - "rf"
+  - "xgb"
+  - "transformer"
+
+hyperparameters:
+  logistic:
+    penalty: "l2"
+    C: 1.0
+    max_iter: 1000
+    class_weight: "balanced"
+    random_state: 42
+    solver: "saga"
+  rf:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    min_samples_leaf: 2
+    class_weight: "balanced"
+    random_state: 42
+    n_jobs: -1
+  xgb:
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    scale_pos_weight: 3.0
+    random_state: 42
+    tree_method: "hist"
+    enable_categorical: false
+  lstm:
+    hidden_dim: 128
+    num_layers: 2
+    bidirectional: true
+    dropout: 0.3
+    batch_size: 64
+    num_epochs: 50
+    learning_rate: 0.001
+    early_stopping_patience: 5
+    weight_decay: 0.0001
+  transformer:
+    d_model: 128
+    nhead: 8
+    num_layers: 3
+    dim_feedforward: 512
+    dropout: 0.3
+    batch_size: 64
+    num_epochs: 50
+    learning_rate: 0.0001
+    early_stopping_patience: 5
+    weight_decay: 0.0001
+
+embeddings:
+  max_emb_dim: 50
+  multiplier: 1.6
+  exponent: 0.56
+
+cross_validation:
+  enabled: false
+  cv_folds: 5
+  n_jobs: -1
+
+seed: 42
+deterministic: true
+
+device: "cuda"
