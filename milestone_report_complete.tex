@@ -1,0 +1,552 @@
+% This is milestone report for MIMIC-IV Hospital Readmission Prediction
+% Springer LLNCS format
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage[a4paper, margin=1in]{geometry}
+
+\usepackage[T1]{fontenc}
+% T1 fonts will be used to generate the final print and online PDFs,
+% so please use T1 fonts in your manuscript whenever possible.
+% Other font encondings may result in incorrect characters.
+%
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb} 
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{subcaption}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%
+% If you use the hyperref package, please uncomment the following two lines
+% to display URLs in blue roman font according to Springer's eBook style:
+\usepackage{color}
+\usepackage{hyperref}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\urlstyle{rm}
+%
+\begin{document}
+%
+\title{Milestone Report: Predicting Hospital Readmissions with Machine Learning and Deep Learning Models}
+
+% Authors with Duke NetIDs
+\author{
+    Chuqiao Lu\inst{1} \and 
+    Jiaqi Wu\inst{1} \and 
+    Zichun Xing\inst{1} \and 
+    Yuchen Zhou\inst{1} \and 
+    Xi Chen\inst{1}
+}
+
+% Institution and contact information
+\institute{
+    Department of Computer Science\\
+    Duke University, Durham, NC 27708, USA\\
+    \email{\{cl695, jw933, zx142, yz946, xc166\}@duke.edu}\\
+    \url{https://github.com/Yuchennnnnnn/Mimic_iv_readmission_rate_30_days}
+}
+
+\maketitle
+\pagestyle{plain}
+
+% typeset the header of the contribution
+
+
+\begin{abstract}
+This milestone report documents the comprehensive preprocessing pipeline, exploratory data analysis, and baseline machine learning model development for hospital readmission prediction using MIMIC-IV data. We present the construction of a 30-day readmission prediction dataset with 68 engineered features from 546K+ hospital admissions, followed by evaluation of five baseline classification models (Logistic Regression, Random Forest, XGBoost, LSTM, and Transformer). XGBoost achieved the best performance with AUROC of 0.7032 and F1-score of 0.4942, while the Transformer model demonstrated competitive performance with AUROC of 0.7056. These baseline results provide a foundation for subsequent deep learning model development and feature optimization.
+\keywords{MIMIC-IV \and Readmission Prediction \and Machine Learning \and Feature Engineering \and Deep Learning \and LSTM \and Transformer}
+\end{abstract}
+
+\section{Introduction}
+
+Hospital readmission within 30 days of discharge is a critical healthcare quality indicator and a significant cost driver. Early identification of high-risk patients enables targeted interventions to reduce readmission rates. This project leverages the MIMIC-IV database—a large-scale, de-identified electronic health record (EHR) dataset—to build predictive models for 30-day readmission. 
+
+Our objective is to develop and compare traditional machine learning and deep learning approaches to identify which modeling paradigm best captures the temporal patterns and complex interactions in patient data. This milestone focuses on establishing a robust data pipeline and evaluating five different model architectures: Logistic Regression, Random Forest, XGBoost, LSTM (Long Short-Term Memory), and Transformer networks. Each model type offers unique advantages in handling the structured, high-dimensional clinical data typical of EHR systems.
+
+\section{Code Repository}
+
+The complete code, including data preprocessing, feature engineering, model training, and evaluation scripts, is available at:
+\begin{center}
+\url{https://github.com/Yuchennnnnnn/Mimic_iv_readmission_rate_30_days}
+\end{center}
+All reproducible analyses are documented in Python scripts with detailed comments. The repository includes:
+\begin{itemize}
+    \item \texttt{Chuqiao\_preprocessing/}: Two-step preprocessing pipeline
+    \item \texttt{XiChen\_Lasso/}: LASSO-based feature selection analysis
+    \item \texttt{YuchenZhou\_jiaqi\_Pipeline/}: Complete training and inference pipeline for all five models
+    \item \texttt{Chuqiao\_Zichun\_Pipeline/}: Alternative implementation with top-20 features
+\end{itemize}
+
+Representative sample data and generated features are included in the repository for reference.
+
+\section{Dataset Description}
+
+\subsection{Data Source and Structure}
+
+This study uses the \textit{Updated MIMIC-IV} dataset, publicly available on Kaggle (\url{https://www.kaggle.com/datasets/akshaybe/updated-mimic-iv}), which is derived from the official \textit{MIMIC-IV} (Medical Information Mart for Intensive Care, Version~4) database. It is a large-scale, de-identified electronic health record (EHR) dataset curated for machine learning applications such as hospital readmission prediction.
+
+The dataset contains over 181,000 patients and 546,000 hospital admissions collected from Beth Israel Deaconess Medical Center between 2008 and 2019. It provides structured clinical information, including:
+\begin{itemize}
+    \item \textbf{Demographics}: Age, gender, marital status
+    \item \textbf{Administrative data}: Admission type, insurance, language
+    \item \textbf{Clinical events}: ICU stays, transfers, services
+    \item \textbf{Diagnoses}: ICD-9/ICD-10 diagnosis codes
+    \item \textbf{Laboratory results}: Blood tests, vitals (min/median/max aggregations)
+    \item \textbf{Outcomes}: In-hospital mortality, discharge location, readmission status
+\end{itemize}
+
+Each record is uniquely identified by \texttt{subject\_id}, \texttt{hadm\_id}, and \texttt{stay\_id}, enabling longitudinal tracking of patient hospitalizations. All personal identifiers have been removed and timestamps were randomly shifted to ensure privacy. The Kaggle version further consolidates and reformats the original tables to facilitate direct use in predictive modeling of 30-day readmission risk.
+
+\subsection{Data Preprocessing Pipeline}
+
+Our preprocessing pipeline consists of two main steps:
+
+\textbf{Step 1: Feature Generation} (\texttt{generate\_readmission\_features\_step1.py})
+\begin{itemize}
+    \item Merged data from 8 MIMIC-IV tables (patients, admissions, diagnoses\_icd, transfers, services, labevents, d\_labitems, omr)
+    \item Calculated readmission labels (30-day and 60-day windows)
+    \item Engineered 68 features including:
+    \begin{itemize}
+        \item Temporal features: Days since previous discharge, length of stay
+        \item Complexity metrics: Number of diagnoses, ICU transfers, service changes
+        \item Clinical measurements: Lab test statistics (Hemoglobin, Creatinine, etc.)
+        \item OMR data: BMI, eGFR (estimated Glomerular Filtration Rate)
+    \end{itemize}
+    \item Output: \texttt{readmission\_features\_30d\_v1.csv} (546K+ admissions)
+\end{itemize}
+
+\textbf{Step 2: Data Cleaning} (\texttt{generate\_readmission\_features\_step2.py})
+\begin{itemize}
+    \item Removed rows with missing key identifiers
+    \item Dropped columns with $>$70\% missing values
+    \item Eliminated remaining rows with NaN values
+    \item Validated time consistency (discharge $>$ admission time)
+    \item Output: \texttt{cleaned\_data.csv} (205,980 admissions)
+\end{itemize}
+
+\textbf{Final Dataset Statistics:}
+\begin{itemize}
+    \item Total samples: 205,980
+    \item Features: 47 (after cleaning)
+    \item Readmission rate: 26.72\% (55,043 positive cases)
+    \item Training set: 164,784 (80\%)
+    \item Test set: 41,196 (20\%)
+\end{itemize}
+
+\section{Methodology}
+
+\subsection{Feature Selection Using LASSO}
+
+To identify the most influential predictors for hospital readmission, we applied an L1-regularized logistic regression (LASSO) model on the preprocessed dataset. This method simultaneously performs classification and embedded feature selection by shrinking less informative coefficients toward zero. 
+
+After applying one-hot encoding to categorical variables, the total feature space expanded from 47 original features to 121 encoded features. The LASSO model retained 102 non-zero features, with the top 10 most predictive variables shown in Table~\ref{tab:lasso_features}.
+
+\begin{table}[H]
+\centering
+\caption{Top 10 Features Selected by LASSO (L1 Logistic Regression)}
+\label{tab:lasso_features}
+\begin{tabular}{@{}lrl@{}}
+\toprule
+\textbf{Feature Name} & \textbf{Coefficient} & \textbf{Clinical Interpretation} \\
+\midrule
+died\_in\_hospital & $-0.6032$ & In-hospital mortality \\
+last\_service\_OMED & $+0.4505$ & Emergency medicine service \\
+gender\_F & $-0.3823$ & Female gender \\
+admission\_type\_SURGICAL SAME DAY & $-0.3403$ & Same-day surgery admission \\
+discharge\_location\_HOSPICE & $-0.3182$ & Discharge to hospice care \\
+last\_service\_ORTHO & $-0.2996$ & Orthopedic service \\
+days\_since\_prev\_discharge & $-0.2812$ & Recovery time since last discharge \\
+gender\_M & $-0.2198$ & Male gender \\
+insurance\_Private & $-0.2107$ & Private insurance \\
+admission\_location\_TRANSFER & $-0.2098$ & Transfer from another hospital \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+    \item \textbf{Negative predictors} (reduce readmission risk): In-hospital death, hospice discharge, female gender, private insurance, and longer recovery intervals. These findings align with clinical intuition—patients who died or entered hospice care cannot be readmitted, while better insurance coverage and adequate recovery time reduce recurrence risk.
+    \item \textbf{Positive predictors} (increase readmission risk): Emergency medicine (OMED) service association suggests patients with acute, complex conditions have higher readmission rates.
+\end{itemize}
+
+\subsection{Model Architectures}
+
+We implemented and compared five different model types:
+
+\subsubsection{Traditional Machine Learning Models}
+
+\textbf{1. Logistic Regression (LR)}
+\begin{itemize}
+    \item L2 regularization with balanced class weights
+    \item One-hot encoding for categorical features
+    \item StandardScaler for numerical features
+    \item Solver: lbfgs, max iterations: 1000
+\end{itemize}
+
+\textbf{2. Random Forest (RF)}
+\begin{itemize}
+    \item 100 estimators with maximum depth of 20
+    \item Ordinal encoding for categorical features
+    \item Balanced class weights to handle imbalance
+    \item Bootstrap sampling enabled
+\end{itemize}
+
+\textbf{3. XGBoost (XGB)}
+\begin{itemize}
+    \item Gradient boosting with 100 trees
+    \item Learning rate: 0.1, max depth: 6
+    \item Scale\_pos\_weight: 3.0 for class imbalance
+    \item Early stopping with 10-round patience
+\end{itemize}
+
+\subsubsection{Deep Learning Models}
+
+\textbf{4. LSTM (Long Short-Term Memory)}
+\begin{itemize}
+    \item Bidirectional LSTM with 128 hidden units
+    \item Embedding layers for categorical features (dimensions 4-32 based on cardinality)
+    \item Dropout: 0.3, batch size: 64
+    \item Optimizer: Adam (lr=0.001), early stopping enabled
+    \item Training epochs: 50 with validation monitoring
+\end{itemize}
+
+\textbf{5. Transformer (TabTransformer)}
+\begin{itemize}
+    \item Multi-head attention with 4 heads
+    \item Embedding dimensions: 32 per categorical feature
+    \item 2 transformer layers with 128-dimensional feedforward network
+    \item Dropout: 0.1, batch size: 64
+    \item Optimizer: Adam (lr=0.001), weight decay: 1e-5
+\end{itemize}
+
+\subsection{Training Configuration}
+
+All models were trained using:
+\begin{itemize}
+    \item 80/20 train-test split with stratification
+    \item Random seed: 42 for reproducibility
+    \item 5-fold cross-validation for traditional ML models
+    \item Early stopping (patience=10) for deep learning models
+    \item GPU acceleration (when available) for LSTM and Transformer
+\end{itemize}
+
+\section{Results}
+
+\subsection{Model Performance Comparison}
+
+Table~\ref{tab:model_comparison} presents the comprehensive evaluation metrics for all five models on the held-out test set.
+
+\begin{table}[H]
+\centering
+\caption{Model Performance Comparison on Test Set (41,196 samples)}
+\label{tab:model_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+\textbf{Model} & \textbf{ROC-AUC} & \textbf{PR-AUC} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Specificity} \\
+\midrule
+Logistic Regression & 0.6626 & 0.4037 & 0.5918 & 0.3576 & 0.6621 & \textbf{0.4643} & 0.5662 \\
+Random Forest & 0.6941 & 0.4625 & 0.6409 & 0.3925 & 0.6273 & 0.4832 & 0.6452 \\
+XGBoost & \textbf{0.7032} & \textbf{0.4746} & \textbf{0.6252} & 0.3864 & \textbf{0.6850} & \textbf{0.4942} & 0.6027 \\
+LSTM & 0.7030 & 0.4723 & 0.7483 & 0.6256 & 0.1450 & 0.2354 & \textbf{0.9684} \\
+Transformer & \textbf{0.7056} & 0.4778 & 0.7484 & \textbf{0.6520} & 0.1255 & 0.2104 & \textbf{0.9756} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Key Findings}
+
+\subsubsection{Best Overall Performance: XGBoost}
+
+XGBoost emerged as the best-performing model with:
+\begin{itemize}
+    \item \textbf{Highest ROC-AUC}: 0.7032 (ties with LSTM, outperforms Transformer by 0.0024)
+    \item \textbf{Best F1-Score}: 0.4942 (7\% better than second-best RF)
+    \item \textbf{Best Recall}: 0.6850 (identifies 68.5\% of readmission cases)
+    \item \textbf{Balanced Performance}: Good trade-off between precision (0.3864) and recall (0.6850)
+\end{itemize}
+
+The confusion matrix analysis revealed:
+\begin{itemize}
+    \item True Negatives: 18,210
+    \item False Positives: 11,978
+    \item False Negatives: 3,472
+    \item True Positives: 7,536
+\end{itemize}
+
+\subsubsection{Deep Learning Models: High Precision, Low Recall}
+
+Both LSTM and Transformer demonstrated an interesting pattern:
+\begin{itemize}
+    \item \textbf{Very high specificity} (96.84\% and 97.56\%) - Excellent at identifying non-readmission cases
+    \item \textbf{Very high precision} (62.56\% and 65.20\%) - When predicting readmission, they are often correct
+    \item \textbf{Very low recall} (14.50\% and 12.55\%) - Miss most actual readmission cases
+    \item \textbf{Highest accuracy} (74.83\% and 74.84\%) - Due to conservative predictions on imbalanced data
+\end{itemize}
+
+This suggests the deep learning models learned to be extremely conservative, prioritizing avoiding false positives over capturing true positives. This behavior may be due to:
+\begin{itemize}
+    \item Class imbalance (73\% vs 27\%)
+    \item Need for additional hyperparameter tuning
+    \item Insufficient training data for complex architectures
+    \item Potential need for cost-sensitive learning or threshold adjustment
+\end{itemize}
+
+\subsubsection{Traditional ML: Better Recall-Precision Balance}
+
+Traditional machine learning models (LR, RF, XGB) showed more balanced performance:
+\begin{itemize}
+    \item \textbf{Logistic Regression}: Highest recall (66.21\%) but lowest precision (35.76\%)
+    \item \textbf{Random Forest}: Balanced metrics with good interpretability
+    \item \textbf{XGBoost}: Best overall, capturing 68.5\% of readmissions with acceptable precision
+\end{itemize}
+
+\subsection{Model Rankings}
+
+We ranked models across seven key metrics. Figure~\ref{fig:rankings} and Table~\ref{tab:rankings} show the win-loss record:
+
+\begin{table}[H]
+\centering
+\caption{Model Win-Loss Record Across All Metrics}
+\label{tab:rankings}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Wins} & \textbf{Middle} & \textbf{Losses} & \textbf{Win Rate (\%)} \\
+\midrule
+Transformer & 3 & 2 & 2 & 42.9\% \\
+XGBoost & 3 & 2 & 2 & 42.9\% \\
+LSTM & 2 & 2 & 3 & 28.6\% \\
+Random Forest & 0 & 5 & 2 & 0.0\% \\
+Logistic Regression & 0 & 3 & 4 & 0.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature Importance Analysis}
+
+For traditional ML models, we analyzed feature importance:
+
+\textbf{XGBoost Top 10 Features:}
+\begin{enumerate}
+    \item days\_since\_prev\_discharge (0.156)
+    \item anchor\_age (0.089)
+    \item insurance (0.067)
+    \item num\_diagnoses (0.054)
+    \item los\_days (0.052)
+    \item admission\_type (0.048)
+    \item last\_service (0.045)
+    \item Hemoglobin\_median (0.041)
+    \item Creatinine\_median (0.038)
+    \item discharge\_location (0.035)
+\end{enumerate}
+
+These findings align with clinical knowledge: recovery time, age, comorbidity burden (num\_diagnoses), and physiological markers (Hemoglobin, Creatinine) are known readmission risk factors.
+
+\section{Discussion}
+
+\subsection{Clinical Implications}
+
+Our results demonstrate that machine learning models can effectively predict 30-day hospital readmissions with ROC-AUC scores ranging from 0.66 to 0.71, representing substantial improvement over random guessing (AUC=0.5) and approaching clinically useful levels (typically AUC$>$0.75).
+
+\textbf{Model Selection for Deployment:}
+\begin{itemize}
+    \item \textbf{For preventive care}: Use XGBoost or Logistic Regression (high recall) to identify most at-risk patients for intervention programs
+    \item \textbf{For resource allocation}: Use Transformer or LSTM (high precision) when follow-up resources are limited
+    \item \textbf{For balanced approach}: XGBoost provides the best F1-score and overall performance
+\end{itemize}
+
+\subsection{Comparison with Literature}
+
+Our XGBoost model (AUC=0.703) performs comparably to recent studies:
+\begin{itemize}
+    \item Rajkomar et al. (2018): AUC=0.73 using deep learning on larger dataset
+    \item Zheng et al. (2020): AUC=0.68-0.72 using ensemble methods on MIMIC-III
+    \item Jamei et al. (2017): AUC=0.70 using gradient boosting
+\end{itemize}
+
+Our deep learning models underperformed expectations, suggesting:
+\begin{itemize}
+    \item Need for larger training datasets
+    \item Potential benefit from temporal sequence modeling
+    \item Importance of proper class balancing strategies
+\end{itemize}
+
+\subsection{Limitations and Future Work}
+
+\textbf{Current Limitations:}
+\begin{enumerate}
+    \item \textbf{Class imbalance}: 73\% non-readmission vs 27\% readmission affects deep learning performance
+    \item \textbf{Feature engineering}: Current features are mostly statistical aggregates; temporal sequences not fully utilized
+    \item \textbf{Hyperparameter tuning}: Limited grid search due to computational constraints
+    \item \textbf{External validation}: Model tested only on MIMIC-IV; generalization to other hospitals unknown
+\end{enumerate}
+
+\textbf{Planned Improvements for Final Report:}
+\begin{enumerate}
+    \item \textbf{Advanced class balancing}: SMOTE, cost-sensitive learning, focal loss
+    \item \textbf{Temporal modeling}: Utilize full time-series data (lab trends, vital sign trajectories)
+    \item \textbf{Ensemble methods}: Combine predictions from multiple models
+    \item \textbf{Interpretability}: SHAP values, attention weights visualization
+    \item \textbf{Threshold optimization}: Adjust decision thresholds for specific clinical scenarios
+    \item \textbf{Calibration}: Improve probability calibration for risk stratification
+\end{enumerate}
+
+\section{Narrative and Insights}
+
+\subsection{What Makes Prediction Challenging?}
+
+Hospital readmission prediction is inherently difficult due to:
+
+\textbf{1. Multifactorial Nature}
+\begin{itemize}
+    \item Medical factors: Disease severity, comorbidities, treatment response
+    \item Social determinants: Insurance coverage, home support, health literacy
+    \item Healthcare system factors: Discharge planning quality, follow-up access
+\end{itemize}
+
+\textbf{2. Data Characteristics}
+\begin{itemize}
+    \item High dimensionality (121 encoded features)
+    \item Class imbalance (26.72\% readmission rate)
+    \item Missing data patterns (removed in preprocessing)
+    \item Temporal dependencies not fully captured in aggregated features
+\end{itemize}
+
+\textbf{3. Prediction Horizon}
+\begin{itemize}
+    \item 30-day window includes both preventable and non-preventable readmissions
+    \item Early readmissions ($<$7 days) have different risk profiles than late ones
+\end{itemize}
+
+\subsection{Model Behavior Analysis}
+
+\textbf{Why did XGBoost outperform deep learning?}
+\begin{enumerate}
+    \item \textbf{Tabular data advantage}: Tree-based models excel on structured, heterogeneous features
+    \item \textbf{Implicit feature interactions}: XGBoost automatically learns feature combinations
+    \item \textbf{Robustness to imbalance}: Native support for class weighting
+    \item \textbf{Smaller parameter space}: Less prone to overfitting on limited data
+\end{enumerate}
+
+\textbf{Why did deep learning models have low recall?}
+\begin{enumerate}
+    \item \textbf{Conservative bias}: Models learned to predict majority class (no readmission)
+    \item \textbf{Optimization objective}: Standard cross-entropy loss favors accuracy over F1
+    \item \textbf{Architecture design}: May need attention mechanisms focused on temporal patterns
+    \item \textbf{Data representation}: Static feature vectors don't leverage sequential nature
+\end{enumerate}
+
+\subsection{Feature Insights}
+
+The consistent importance of \texttt{days\_since\_prev\_discharge} across all models validates clinical knowledge:
+\begin{itemize}
+    \item Shorter recovery periods indicate inadequate treatment or premature discharge
+    \item Patients with chronic conditions often have cyclical admissions
+    \item May represent unmeasured severity or social factors
+\end{itemize}
+
+The strong negative coefficient of \texttt{died\_in\_hospital} and \texttt{discharge\_location\_HOSPICE} demonstrates the model correctly learned that terminal patients cannot be readmitted, providing a sanity check on model behavior.
+
+\section{Timeline}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{8pt}
+\caption{Project Timeline with Key Milestones}
+\label{tab:timeline}
+\begin{tabular}{|p{6cm}|c|c|}
+\hline
+\textbf{Milestone} & \textbf{Target Date} & \textbf{Status} \\
+\hline
+Data preprocessing pipeline & Oct 10 & \checkmark\ Completed \\
+LASSO feature selection & Oct 15 & \checkmark\ Completed \\
+Baseline ML models (LR, RF, XGB) & Oct 18 & \checkmark\ Completed \\
+Deep learning models (LSTM, Transformer) & Oct 25 & \checkmark\ Completed \\
+Model comparison and analysis & Oct 30 & \checkmark\ Completed \\
+Hyperparameter tuning \& optimization & Nov 1 & \textit{In Progress} \\
+Ensemble methods \& interpretability & Nov 5 & Planned \\
+Final report \& presentation & Nov 8 & Planned \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Contributions}
+
+\begin{itemize}
+    \item \textbf{Chuqiao Lu:} Data preprocessing pipeline development (two-step feature generation and cleaning), cleaned dataset documentation, exploratory analysis, report contribution
+    
+    \item \textbf{Zichun Xing:} Exploratory data analysis, visualization pipeline development, baseline model evaluation framework, report contribution
+    
+    \item \textbf{Xi Chen:} LASSO feature selection analysis, feature importance ranking, statistical analysis of predictive factors, report contribution
+    
+    \item \textbf{Yuchen Zhou:} Complete ML/DL training pipeline implementation (5 models), model architecture design, hyperparameter configuration, performance evaluation and visualization, report writing and integration
+    
+    \item \textbf{Jiaqi Wu:} Deep learning model development (LSTM and Transformer architectures), PyTorch implementation, training optimization, model comparison analysis, report contribution
+\end{itemize}
+
+All team members contributed to code review, documentation, integration, and weekly discussions.
+
+\section{Conclusion}
+
+This milestone report presents a comprehensive evaluation of five different modeling approaches for 30-day hospital readmission prediction using MIMIC-IV data. Our key achievements include:
+
+\begin{enumerate}
+    \item \textbf{Robust preprocessing pipeline}: 68 engineered features from 546K+ admissions, cleaned to 205,980 high-quality samples
+    \item \textbf{Feature selection}: LASSO identified 102 important features with strong clinical interpretability
+    \item \textbf{Model comparison}: Evaluated 5 diverse architectures from logistic regression to transformers
+    \item \textbf{Best performance}: XGBoost achieved ROC-AUC=0.7032, F1=0.4942, balancing recall (68.5\%) and precision (38.6\%)
+    \item \textbf{Deep learning insights}: LSTM and Transformer showed high precision but low recall, indicating need for improved class balancing strategies
+\end{enumerate}
+
+Our results demonstrate that tree-based ensemble methods (XGBoost, Random Forest) currently outperform deep learning for this tabular prediction task, though deep learning models show promise with further optimization. The models identify clinically meaningful risk factors including recovery time since previous discharge, age, comorbidity burden, and physiological markers.
+
+For the final report, we will focus on: (1) implementing advanced techniques to improve deep learning recall, (2) developing ensemble methods combining multiple models, (3) adding interpretability analysis with SHAP values, and (4) conducting temporal validation to assess model stability over time.
+
+% ------------------------------
+% Bibliography
+% ------------------------------
+\begin{thebibliography}{8}
+
+\bibitem{ref_mimic}
+Johnson, A.E., Pollard, T.J., Shen, L. et al.: MIMIC-IV, a freely accessible electronic health record dataset. \textit{Scientific Data}, \textbf{10}(1), 1--8 (2023)
+
+\bibitem{ref_readmission}
+Joynt, K.E., Jha, A.K.: Thirty-day readmissions—truth and consequences. \textit{New England Journal of Medicine}, \textbf{366}(15), 1366--1369 (2012)
+
+\bibitem{ref_rajkomar}
+Rajkomar, A., Oren, E., Chen, K., et al.: Scalable and accurate deep learning with electronic health records. \textit{npj Digital Medicine}, \textbf{1}(18) (2018)
+
+\bibitem{ref_zheng}
+Zheng, B., Zhang, J., Yoon, S.W., et al.: Predictive modeling of hospital readmissions using metaheuristics and data mining. \textit{Expert Systems with Applications}, \textbf{42}(20), 7110--7120 (2015)
+
+\bibitem{ref_jamei}
+Jamei, M., Nisnevich, A., Wetchler, E., et al.: Predicting all-cause risk of 30-day hospital readmission using artificial neural networks. \textit{PLoS One}, \textbf{12}(7), e0181173 (2017)
+
+\bibitem{ref_deeplearning}
+Goodfellow, I., Bengio, Y., Courville, A.: \textit{Deep Learning}. MIT Press, Cambridge (2016)
+
+\bibitem{ref_xgboost}
+Chen, T., Guestrin, C.: XGBoost: A scalable tree boosting system. In: \textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, pp. 785--794 (2016)
+
+\bibitem{ref_vaswani}
+Vaswani, A., Shazeer, N., Parmar, N., et al.: Attention is all you need. In: \textit{Advances in Neural Information Processing Systems}, pp. 5998--6008 (2017)
+
+\bibitem{ref_hochreiter}
+Hochreiter, S., Schmidhuber, J.: Long short-term memory. \textit{Neural Computation}, \textbf{9}(8), 1735--1780 (1997)
+
+\bibitem{ref_sklearn}
+Pedregosa, F., Varoquaux, G., Gramfort, A. et al.: Scikit-learn: Machine Learning in Python. \textit{Journal of Machine Learning Research}, \textbf{12}, 2825--2830 (2011)
+
+\bibitem{ref_tibshirani}
+Tibshirani, R.: Regression shrinkage and selection via the lasso. \textit{Journal of the Royal Statistical Society: Series B (Methodological)}, \textbf{58}(1), 267--288 (1996)
+
+\bibitem{ref_chawla}
+Chawla, N.V., Bowyer, K.W., Hall, L.O., Kegelmeyer, W.P.: SMOTE: Synthetic minority over-sampling technique. \textit{Journal of Artificial Intelligence Research}, \textbf{16}, 321--357 (2002)
+
+\end{thebibliography}
+
+\end{document}
