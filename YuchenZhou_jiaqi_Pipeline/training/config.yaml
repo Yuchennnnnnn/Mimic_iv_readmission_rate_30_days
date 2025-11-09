@@ -2,7 +2,7 @@
 
 # Data paths
 data:
-  input_path: "../../cleaned_data.csv"
+  input_path: "/Users/luchuqiao/Desktop/Compsci526/Mimic-project/datasets/cleaned_data.csv"
   feature_importance_path: "../Feature_Importance_by_Coef.csv"  # Pre-computed feature importance
   output_dir: "artifacts"
   reports_dir: "reports"
@@ -58,7 +58,7 @@ preprocessing:
 feature_selection:
   enabled: true  # Set to false to use all features
   method: "importance_file"  # Use pre-computed importance
-  top_n: 50  # Keep top N features (null to keep all)
+  top_n: 20  # Keep top N features (null to keep all)
   importance_threshold: 0.05  # Minimum importance threshold (null to ignore)
 
 # Train/test split
@@ -72,7 +72,6 @@ models_to_run:
   - "logistic"
   - "rf"
   - "xgb"
-  - "lstm"
   - "transformer"
 
 # Model hyperparameters

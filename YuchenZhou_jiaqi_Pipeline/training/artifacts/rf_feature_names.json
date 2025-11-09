@@ -8,13 +8,6 @@
   "admission_location",
   "discharge_location",
   "anchor_age",
-  "num_diagnoses",
-  "Hemoglobin_min",
-  "Glucose_median",
-  "is_surgical_service",
-  "died_in_hospital",
-  "unique_careunits",
-  "Potassium_min",
   "days_since_prev_discharge",
-  "Hemoglobin_median"
+  "died_in_hospital"
 ]
