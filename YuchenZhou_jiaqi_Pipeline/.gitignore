@@ -1,0 +1,74 @@
+# Large data files - DO NOT commit to GitHub
+# These files exceed GitHub's 100MB limit
+
+# Output directory - contains processed data (39GB total)
+output/
+preprocessing/output/
+
+# Large intermediate files
+*.pkl
+*.parquet
+
+# Exceptions - keep small index files if needed
+!*_index.parquet
+!feature_names.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs
+*.log
+nohup.out
+step*.log
+step*_log.txt
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Model artifacts (if large)
+artifacts/model_*.pt
+artifacts/*.pth
+artifacts/*.h5
+
+# Keep small config and metadata files
+!artifacts/*.json
+!artifacts/*.yaml
+!config.yaml

@@ -1,0 +1,129 @@
+# Configuration for MIMIC-IV Temporal Preprocessing Pipeline
+
+# Data paths (local MIMIC-IV CSV files)
+data_paths:
+  # MIMIC-IV hosp module
+  patients: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/hosp/patients.csv"
+  admissions: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/hosp/admissions.csv"
+  
+  # MIMIC-IV ICU module (for chartevents)
+  chartevents: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/icu/chartevents.csv"
+  d_items: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/icu/d_items.csv"
+  
+  # MIMIC-IV hosp module (for labevents and prescriptions)
+  labevents: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/hosp/labevents.csv"
+  d_labitems: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/hosp/d_labitems.csv"
+  prescriptions: "/Users/yuchenzhou/Documents/duke/compsci526/final_proj/mimic-iv-3.1/hosp/prescriptions.csv"
+  
+  # Optional: If you have already cleaned data
+  cleaned_data: "../../cleaned_data.csv"  # From Chuqiao's preprocessing
+
+# Output paths
+paths:
+  output_dir: "../output"  # Will resolve to YuchenZhou_jiaqi_Pipeline/output
+
+# Preprocessing parameters
+preprocessing:
+  time_window_hours: 48  # First 48 hours after admission
+  bin_size_hours: 1  # 1-hour bins
+  min_age: 18  # Minimum age for inclusion
+  readmit_window_days: 30  # 30-day readmission window
+  
+  # Aggregation function for binning irregular time series
+  # Options: 'median', 'mean', 'min', 'max', 'last'
+  aggregation_function: 'median'
+  
+  # Processing chunk size (to manage memory)
+  chunk_size: 10000
+
+# Clinical outlier bounds (lower, upper)
+clinical_bounds:
+  # Vitals
+  heart_rate: [20, 250]
+  sbp: [40, 280]
+  dbp: [20, 200]
+  mbp: [30, 220]
+  respiratory_rate: [4, 60]
+  spo2: [50, 100]
+  temperature_c: [28, 44]
+  temperature_f: [82, 111]
+  
+  # Labs - Hematology
+  hemoglobin: [2, 25]
+  hematocrit: [10, 75]
+  platelets: [10, 1000]
+  wbc: [0.1, 100]
+  rbc: [1, 10]
+  
+  # Labs - Chemistry
+  sodium: [100, 180]
+  potassium: [1.5, 10]
+  chloride: [50, 150]
+  bicarbonate: [5, 50]
+  bun: [1, 200]
+  creatinine: [0.1, 25]
+  glucose: [20, 800]
+  calcium: [4, 20]
+  magnesium: [0.5, 10]
+  phosphate: [0.5, 15]
+  
+  # Labs - Liver
+  alt: [0, 5000]
+  ast: [0, 5000]
+  bilirubin_total: [0, 50]
+  alkaline_phosphatase: [0, 2000]
+  albumin: [0.5, 10]
+  
+  # Labs - Coagulation
+  inr: [0.5, 15]
+  pt: [5, 150]
+  ptt: [10, 200]
+  
+  # Labs - Blood Gas
+  po2: [20, 600]
+  pco2: [10, 150]
+  ph: [6.5, 8.0]
+  
+  # Labs - Cardiac
+  troponin: [0, 100]
+  ck: [0, 10000]
+  ck_mb: [0, 1000]
+
+# Temporal split configuration (by anchor_year_group)
+temporal_split:
+  train_years: [2008, 2014]  # 2008-2013
+  val_years: [2014, 2017]    # 2014-2016
+  test_years: [2017, 2020]   # 2017-2019
+  
+  # Expected split ratios (approximate)
+  train_ratio: 0.60
+  val_ratio: 0.20
+  test_ratio: 0.20
+
+# Output format
+output:
+  save_pickle: true  # Save as pickle for fast loading
+  save_parquet: true  # Save index as parquet for metadata
+  compression: "gzip"  # Compression type
+
+# Feature engineering options
+feature_engineering:
+  compute_masks: true  # Binary observation indicators
+  compute_deltas: true  # Time since last observation
+  forward_fill: true  # Forward-fill missing values
+  median_imputation: true  # Median imputation for remaining NaNs
+  
+  # GCS total computation
+  compute_gcs_total: true  # Compute total GCS from eye/verbal/motor components
+
+# Data quality checks
+quality_checks:
+  remove_extreme_outliers: true  # Use clinical bounds
+  remove_duplicates: true  # Remove duplicate measurements at same time
+  min_observations_per_admission: 5  # Minimum number of observations required
+  
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_logs: true
+  log_file: "../output/preprocessing.log"
