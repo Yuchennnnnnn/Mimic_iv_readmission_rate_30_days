@@ -1,0 +1,16 @@
+Bootstrap Feature Selection Summary
+Data file: ../datasets/cleaned_data.csv
+Target column: readmit_label
+Iterations: 200, sample fraction: 0.8, C=0.1
+Top 10 raw features by mean selection pct:
+              raw_feature  encoded_components  mean_selection_pct  max_selection_pct  mean_abs_coef
+         unique_careunits                   1                 1.0                1.0       0.155977
+      is_surgical_service                   1                 1.0                1.0       0.066613
+days_since_prev_discharge                   1                 1.0                1.0       0.341074
+      death_within_window                   1                 1.0                1.0       0.034053
+            Sodium_median                   1                 1.0                1.0       0.062110
+         died_in_hospital                   1                 1.0                1.0       1.018911
+            Potassium_min                   1                 1.0                1.0       0.069658
+            Potassium_max                   1                 1.0                1.0       0.026656
+        PlateletCount_min                   1                 1.0                1.0       0.120505
+               anchor_age                   1                 1.0                1.0       0.161088

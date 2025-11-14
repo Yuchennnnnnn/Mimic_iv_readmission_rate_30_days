@@ -58,7 +58,7 @@ preprocessing:
 feature_selection:
   enabled: true  # Set to false to use all features
   method: "importance_file"  # Use pre-computed importance
-  top_n: 20  # Keep top N features (null to keep all)
+  top_n: 30  # Keep top N features (null to keep all)
   importance_threshold: 0.05  # Minimum importance threshold (null to ignore)
 
 # Train/test split
@@ -142,7 +142,7 @@ cross_validation:
 
 # Random seeds for reproducibility
 seed: 42
-deterministic: true
+deterministic: trueÍ
 
 # Compute device
-device: "cuda"  # or "cpu"
+device: "cpu"  # or "cpu"
